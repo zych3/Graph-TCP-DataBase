@@ -8,6 +8,10 @@ import java.util.Scanner;
 
 public class DatabaseClient implements IClient {
 
+    public static void main(String[] args) {
+        DatabaseClient client = new DatabaseClient(9000, "localhost");
+    }
+
     public DatabaseClient(){}
     public DatabaseClient(int port, String ip)
     {
@@ -44,13 +48,10 @@ public class DatabaseClient implements IClient {
 
         while(true)
         {
-
             String input = getUserInput();
+            sendPacket(handleUserInput(input), writer);
             if(input.equals("exit"))
                 return;
-            sendPacket(
-                    handleUserInput(input), writer
-            );
         }
 
 
