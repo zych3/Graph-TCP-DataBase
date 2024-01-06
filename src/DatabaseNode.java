@@ -11,57 +11,23 @@ import java.net.Socket;
 
 public class DatabaseNode implements IClient {
     public static void main(String[] args) {
-
-        Thread serverThread = new Thread(new Runnable(){
-            @Override
-            public void run() {
-                DatabaseNode test = new DatabaseNode(9000, "localhost");
-                test.startServer();
-            }
-        });
-        Thread clientThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DatabaseNode c1 = new DatabaseNode(9001, "localhost");
-                try{
-                    c1.connectTo(9000, "localhost");
-                    //System.out.println("connection finished");
-
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        Thread otherClient = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DatabaseNode c2 = new DatabaseNode(9002, "localhost");
-                try{
-                    c2.connectTo(9000, "localhost");
-                    //System.out.println("connection finished");
-
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-        serverThread.start();
-        clientThread.start();
-        otherClient.start();
-
+        DatabaseNode server = new DatabaseNode(9000, "localhost", 17, 32);
+        server.startServer();
 
     }
     // --- General stuff ---
-    private int port;
-    private String ip;
-    private int key;
-    private int value;
+    private int mPort;
+    private String mIp;
+    private int mKey;
+    private int mValue;
 
     public DatabaseNode(){}
-    public DatabaseNode(int port, String ip) {
-        port = port;
-        ip = ip;
+
+    public DatabaseNode(int port, String ip, int key, int val) {
+        mPort = port;
+        mIp = ip;
+        mKey = key;
+        mValue = val;
         try {
             serverSocket = new ServerSocket(port);
         } catch (Exception e)
@@ -131,6 +97,7 @@ public class DatabaseNode implements IClient {
             } else if(inputLine.equals("CON_REQ_NOD"))
             {
                 System.out.println("New node connected: " + clientSocket.getPort());
+                processNodeRequest(reader, writer);
             }
             while(!(inputLine = reader.readLine()).equals("KILL"))
             {
@@ -138,15 +105,15 @@ public class DatabaseNode implements IClient {
                     setCurrPacket(makePacket(inputLine));
                     switch(Process(currPacket)){
                         case 1 << 3:
-                            value = currPacket.getVal2();
+                            mValue = currPacket.getVal2();
                             writer.write("Value changed :D");
                             writer.newLine();
                             writer.flush();
                             System.out.println("Value changed");
                             break;
                         case 1 << 4:
-                            System.out.println("Value here is " + value);
-                            writer.write("Value: " + value);
+                            System.out.println("Value here is " + mValue);
+                            writer.write("Value: " + mValue);
                             writer.newLine();
                             writer.flush();
                             break;
@@ -195,6 +162,24 @@ public class DatabaseNode implements IClient {
         return GDBP_OperationsMap.getMap().get(packet.getCom());
     }
 
+    private void processNodeRequest(BufferedReader reader, BufferedWriter writer){
+        try{
+            String line = reader.readLine();
+            setCurrPacket(makePacket(line));
+            switch(Process(currPacket)){
+                case 1 << 4:
+                    if(mKey == currPacket.getVal1())
+                        writer.write("Value at: " + mKey + " : " + mValue);
+                    else
+                        writer.write("GET_VAL 17");
+                    writer.newLine();
+                    writer.flush();
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
 
 
     // --- Client side ---
@@ -208,20 +193,26 @@ public class DatabaseNode implements IClient {
         BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(socket.getOutputStream()
                 ));
-
         //---debug---
+
         writer.write(C_Initial);
         writer.newLine();
         writer.flush();
         try{
-            Thread.sleep(2000);
-
+            Thread.sleep(1000);
         } catch(Exception e){
             System.out.println("error");
         }
-        /*String response = reader.readLine();
-        System.out.println(response);*/
-        System.out.println("connection finished");
+        System.out.println("Ops start...");
+        writer.write("GET_VAL 18");
+        writer.newLine();
+        writer.flush();
+        while(true){
+            String input = reader.readLine();
+            if(!(input.isEmpty()))
+                System.out.println(input);
+        }
+
     }
 
     static final String C_Initial = "CON_REQ_NOD";

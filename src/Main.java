@@ -1,6 +1,11 @@
 public class Main {
     public static void main(String[] args) {
-        DatabaseClient client = new DatabaseClient(3393, "localhost");
-
+        DatabaseNode client = new DatabaseNode(9001, "localhost", 18, 42);
+        try{
+            client.connectTo(9000, "localhost");
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+        /*DatabaseClient c = new DatabaseClient(9000, "localhost");*/
     }
 }
