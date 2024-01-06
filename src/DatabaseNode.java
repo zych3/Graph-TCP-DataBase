@@ -1,24 +1,65 @@
 import db_Interfaces.IClient;
 
+import db_Utils.GDBP_OperationsMap;
+import db_Utils.GDBP_Packet;
 import db_Utils.PacketCreationException;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class DatabaseNode implements IClient {
     public static void main(String[] args) {
-        DatabaseNode test = new DatabaseNode(9000, "localhost");
-        test.startServer();
+
+        Thread serverThread = new Thread(new Runnable(){
+            @Override
+            public void run() {
+                DatabaseNode test = new DatabaseNode(9000, "localhost");
+                test.startServer();
+            }
+        });
+        Thread clientThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DatabaseNode c1 = new DatabaseNode(9001, "localhost");
+                try{
+                    c1.connectTo(9000, "localhost");
+                    //System.out.println("connection finished");
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        Thread otherClient = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DatabaseNode c2 = new DatabaseNode(9002, "localhost");
+                try{
+                    c2.connectTo(9000, "localhost");
+                    //System.out.println("connection finished");
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+        serverThread.start();
+        clientThread.start();
+        otherClient.start();
+
 
     }
-    // --- Default stuff ---
+    // --- General stuff ---
     private int port;
     private String ip;
+    private int key;
+    private int value;
 
     public DatabaseNode(){}
-    public DatabaseNode(int port, String ip)
-    {
+    public DatabaseNode(int port, String ip) {
         port = port;
         ip = ip;
         try {
@@ -28,12 +69,16 @@ public class DatabaseNode implements IClient {
             e.printStackTrace();
         }
     }
+    GDBP_Packet currPacket;
+
+
 
     // --- Server Side ---
     private boolean isProcessing;
     private boolean isServerActive;
     private boolean clientConnected;
     private ServerSocket serverSocket;
+
 
     public void startServer() {
         isServerActive = true;
@@ -83,21 +128,72 @@ public class DatabaseNode implements IClient {
                 writer.write(S_Initial_Response);
                 writer.newLine();
                 writer.flush();
-            }
-            while(!(inputLine = reader.readLine()).equals("exit"))
+            } else if(inputLine.equals("CON_REQ_NOD"))
             {
-                if(!inputLine.isEmpty())
-                {
-                    System.out.println("Received: " + inputLine);
-                }
+                System.out.println("New node connected: " + clientSocket.getPort());
             }
+            while(!(inputLine = reader.readLine()).equals("KILL"))
+            {
+                if(!inputLine.isEmpty()){
+                    setCurrPacket(makePacket(inputLine));
+                    switch(Process(currPacket)){
+                        case 1 << 3:
+                            value = currPacket.getVal2();
+                            writer.write("Value changed :D");
+                            writer.newLine();
+                            writer.flush();
+                            System.out.println("Value changed");
+                            break;
+                        case 1 << 4:
+                            System.out.println("Value here is " + value);
+                            writer.write("Value: " + value);
+                            writer.newLine();
+                            writer.flush();
+                            break;
+
+
+                    }
+                }
+
+            }
+
             reader.close();
             clientSocket.close();
+            System.out.println("client disconnected");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    GDBP_Packet makePacket(String input){
+        GDBP_Packet packet = null;
+        String[] words = input.split(" ");
+        try {
+            packet = switch (words.length) {
+                case 1 -> GDBP_Packet.createPacket(words[0]);
+                case 2 -> GDBP_Packet.createPacket(
+                        words[0], Integer.parseInt(words[1])
+                );
+                case 3 -> GDBP_Packet.createPacket(
+                        words[0], Integer.parseInt(words[1]), Integer.parseInt(words[2])
+                );
+                default -> packet;
+            };
+        } catch (Exception e){
+            e.printStackTrace();
+
+        }
+        return packet;
+    }
+    void setCurrPacket(GDBP_Packet p){
+        currPacket = p;
+        isProcessing = true;
+    }
+
+    private int Process(GDBP_Packet packet){
+        isProcessing = false;
+        return GDBP_OperationsMap.getMap().get(packet.getCom());
+    }
 
 
 
@@ -112,16 +208,25 @@ public class DatabaseNode implements IClient {
         BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(socket.getOutputStream()
                 ));
+
         //---debug---
         writer.write(C_Initial);
         writer.newLine();
         writer.flush();
+        try{
+            Thread.sleep(2000);
 
-        String response = "CONN_ACC"; //debug as well, will be a reply from the server
-        if(response == "CONN_ACC")
-            System.out.println("Connection established");
+        } catch(Exception e){
+            System.out.println("error");
+        }
+        /*String response = reader.readLine();
+        System.out.println(response);*/
+        System.out.println("connection finished");
     }
 
-    static final String C_Initial = "CONN_REQ_NOD";
+    static final String C_Initial = "CON_REQ_NOD";
     static final String S_Initial_Response = "CON_ACC";
+
+
+
 }

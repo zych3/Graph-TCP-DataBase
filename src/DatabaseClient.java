@@ -1,4 +1,5 @@
 import db_Interfaces.IClient;
+import db_Utils.ClientInputValidator;
 import db_Utils.GDBP_Packet;
 import db_Utils.PacketCreationException;
 
@@ -10,6 +11,7 @@ public class DatabaseClient implements IClient {
 
     public static void main(String[] args) {
         DatabaseClient client = new DatabaseClient(9000, "localhost");
+
     }
 
     public DatabaseClient(){}
@@ -38,20 +40,19 @@ public class DatabaseClient implements IClient {
         writer.write(initial);
         writer.newLine();
         writer.flush();
-
-        String response = "CONN_ACC"; //debug as well, will be a reply from the server
-        if(response == "CONN_ACC")
-            System.out.println("Connection established");
-        else
-            return;
+        try{
+            Thread.sleep(1000);
+        } catch(Exception e){
+            System.out.println("error");
+        }
+        String response = reader.readLine(); //debug, will be caught
         System.out.println("Type \"exit\" to close connection");
-
-        while(true)
+        String input;
+        while(!(input = getUserInput()).equals("exit"))
         {
-            String input = getUserInput();
             sendPacket(handleUserInput(input), writer);
-            if(input.equals("exit"))
-                return;
+            response = reader.readLine();
+            System.out.println(response);
         }
 
 

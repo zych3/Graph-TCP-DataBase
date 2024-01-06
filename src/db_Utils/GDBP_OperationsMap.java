@@ -28,6 +28,7 @@ public abstract class GDBP_OperationsMap {
         //--Internal communication--
         map.put("CURR_PROC", 1 << 10);
         map.put("CURR_FREE", 1 << 11);
+        map.put("KILL_SELF", 1 << 12);
         /*map.put("N_FIND_KEY", 1 << 11);
         map.put("N_GET_MAX", 1 << 12);
         map.put("N_GET_MIN", 1 << 13);
@@ -60,6 +61,7 @@ public abstract class GDBP_OperationsMap {
         //--Internal communication--
         r_map.put(1 << 10, "CURR_PROC");
         r_map.put(1 << 11, "CURR_FREE");
+        r_map.put(1 << 12, "KILL_SELF");
         /*map.put(1 << 12, "N_FIND_KEY");
         map.put(1 << 13, "N_GET_MAX");
         map.put(1 << 14, "N_GET_MIN");
@@ -83,7 +85,7 @@ public abstract class GDBP_OperationsMap {
         noArgsOps.add(1 << 8);
         noArgsOps.add(1 << 9);
         noArgsOps.add(1 << 10);
-
+        noArgsOps.add(1 << 12);
     }
     public static Set<Integer> getNoArgsOps() {
         return noArgsOps;
