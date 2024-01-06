@@ -33,7 +33,7 @@ public class GDBP_Packet {
         if(!GDBP_OperationsMap.getMap().containsKey(com))
             throw new PacketCreationException("Error: Invalid communicat");
         var wrapper = GDBP_OperationsMap.getMap().get(com);
-        if(!GDBP_OperationsMap.getOneArgOps().contains(wrapper))
+        if((!GDBP_OperationsMap.getOneArgOps().contains(wrapper)))
             throw new PacketCreationException("Error: Invalid arguments. Check if you've provided enough arguments for your communicat");
         this.com = com;
         this.val1 = first;
@@ -53,4 +53,16 @@ public class GDBP_Packet {
     private String com;
     private int val1;
     private int val2;
+
+    public String getCom() {
+        return com;
+    }
+
+    public int getVal1() {
+        return val1;
+    }
+
+    public int getVal2() {
+        return val2;
+    }
 }

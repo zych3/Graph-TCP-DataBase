@@ -12,22 +12,22 @@ public abstract class GDBP_OperationsMap {
 
     static {
         //---Digital handshake---
-        map.put("CON_REQ_NOD", 0);
-        map.put("CON_REQ_CLI", 1);
-        map.put("CON_ACC", 1 << 1);
+        map.put("CON_REQ_NOD", 1);
+        map.put("CON_REQ_CLI", 1<<1);
+        map.put("CON_ACC", 1 << 2);
 
         //--DB_Client actions---
-        map.put("SET_VAL", 1 << 2);
-        map.put("GET_VAL", 1 << 3);
-        map.put("FIND_KEY", 1 << 4);
-        map.put("GET_MAX", 1 << 5);
-        map.put("GET_MIN", 1 << 6);
-        map.put("REWRITE", 1 << 7);
-        map.put("KILL", 1 << 8);
+        map.put("SET_VAL", 1 << 3);
+        map.put("GET_VAL", 1 << 4);
+        map.put("FIND_KEY", 1 << 5);
+        map.put("GET_MAX", 1 << 6);
+        map.put("GET_MIN", 1 << 7);
+        map.put("REWRITE", 1 << 8);
+        map.put("KILL", 1 << 9);
 
         //--Internal communication--
-        map.put("CURR_PROC", 1 << 9);
-        map.put("CURR_FREE", 1 << 10);
+        map.put("CURR_PROC", 1 << 10);
+        map.put("CURR_FREE", 1 << 11);
         /*map.put("N_FIND_KEY", 1 << 11);
         map.put("N_GET_MAX", 1 << 12);
         map.put("N_GET_MIN", 1 << 13);
@@ -44,7 +44,7 @@ public abstract class GDBP_OperationsMap {
 
     static {
         //---Digital handshake---
-        r_map.put(1 << 0, "CON_REQ_NOD");
+        r_map.put(1, "CON_REQ_NOD");
         r_map.put(1 << 1, "CON_REQ_CLI");
         r_map.put(1 << 2, "CON_ACC");
 
@@ -91,7 +91,7 @@ public abstract class GDBP_OperationsMap {
 
     private static final Set<Integer> oneArgOps = new HashSet<>();
     static {
-        oneArgOps.add(1 << 3);
+        oneArgOps.add(1 << 5);
         oneArgOps.add(1 << 4);
     }
 
@@ -101,8 +101,8 @@ public abstract class GDBP_OperationsMap {
 
     private static final Set<Integer> twoArgOps = new HashSet<>();
     static {
-        twoArgOps.add(1 << 2);
-        twoArgOps.add(1 << 7);
+        twoArgOps.add(1 << 3);
+        twoArgOps.add(1 << 8);
     }
 
     public static Set<Integer> getTwoArgOps(){
