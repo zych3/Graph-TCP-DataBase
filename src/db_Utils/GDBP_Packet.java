@@ -65,4 +65,11 @@ public class GDBP_Packet {
     public int getVal2() {
         return val2;
     }
+
+    @Override
+    public String toString(){
+        return this.getCom() +
+               (this.getVal1() != 0 ? " " + this.getVal1() : "") +
+               (this.getVal2() != 0 ? " " + this.getVal2() : "");
+    }
 }

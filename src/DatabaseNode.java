@@ -89,41 +89,28 @@ public class DatabaseNode implements IClient {
             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
             String inputLine = reader.readLine();
-            if(inputLine.equals("CON_REQ_CLI")) {
+            String initialLine = inputLine;
+            {
                 System.out.println("Received: " + inputLine);
                 writer.write(S_Initial_Response);
                 writer.newLine();
                 writer.flush();
-            } else if(inputLine.equals("CON_REQ_NOD"))
-            {
-                System.out.println("New node connected: " + clientSocket.getPort());
-                processNodeRequest(reader, writer);
-            }
-            while(!(inputLine = reader.readLine()).equals("KILL"))
-            {
-                if(!inputLine.isEmpty()){
-                    setCurrPacket(makePacket(inputLine));
-                    switch(Process(currPacket)){
-                        case 1 << 3:
-                            mValue = currPacket.getVal2();
-                            writer.write("Value changed :D");
-                            writer.newLine();
-                            writer.flush();
-                            System.out.println("Value changed");
-                            break;
-                        case 1 << 4:
-                            System.out.println("Value here is " + mValue);
-                            writer.write("Value: " + mValue);
-                            writer.newLine();
-                            writer.flush();
-                            break;
-
-
+                while(!((inputLine = reader.readLine()).equals("VOID_DONE")) &&
+                        !((inputLine).equals("INT_DONE")) &&
+                        !((inputLine).equals("PAIR_DONE")))
+                {
+                    if(!inputLine.isEmpty())
+                    {
+                        System.out.println("Received: " + inputLine);
+                        setCurrPacket(makePacket(inputLine));
+                        if(initialLine.equals("CON_REQ_CLI"))
+                            processClientRequest(reader,writer);
+                        else if(initialLine.equals("CON_REQ_NOD"))
+                            processNodeRequest(reader, writer, currPacket);
                     }
                 }
 
             }
-
             reader.close();
             clientSocket.close();
             System.out.println("client disconnected");
@@ -162,22 +149,56 @@ public class DatabaseNode implements IClient {
         return GDBP_OperationsMap.getMap().get(packet.getCom());
     }
 
-    private void processNodeRequest(BufferedReader reader, BufferedWriter writer){
+    private void processNodeRequest(BufferedReader reader, BufferedWriter writer, GDBP_Packet packet){
         try{
-            String line = reader.readLine();
-            setCurrPacket(makePacket(line));
+            currPacket = packet;
+                switch(Process(currPacket)){
+                    case 4:
+                        if(mKey == currPacket.getVal1())
+                            writer.write("DONE " + mValue);
+                        else
+                            writer.write(askOtherNodes(reader, writer, currPacket));
+                        writer.newLine();
+                        writer.flush();
+                }
+
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    private void processClientRequest(BufferedReader reader, BufferedWriter writer){
+        try{
             switch(Process(currPacket)){
-                case 1 << 4:
+                case 4:
                     if(mKey == currPacket.getVal1())
                         writer.write("Value at: " + mKey + " : " + mValue);
                     else
-                        writer.write("GET_VAL 17");
+                        writer.write(askOtherNodes(reader, writer, currPacket));
                     writer.newLine();
                     writer.flush();
             }
         } catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+    private String askOtherNodes(BufferedReader reader, BufferedWriter writer, GDBP_Packet packet){
+        try{
+            writer.write(packet.toString());
+            writer.newLine();
+            writer.flush();
+            String message;
+            while(!((message = reader.readLine()).equals("VOID_DONE")) &&
+                  !((message).equals("INT_DONE")) &&
+                  !((message).equals("PAIR_DONE"))
+            ){
+                if(!(message.isEmpty()))
+                    System.out.println(message);
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+        return "temp";
     }
 
 
@@ -199,18 +220,18 @@ public class DatabaseNode implements IClient {
         writer.newLine();
         writer.flush();
         try{
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch(Exception e){
             System.out.println("error");
         }
-        System.out.println("Ops start...");
-        writer.write("GET_VAL 18");
-        writer.newLine();
-        writer.flush();
-        while(true){
-            String input = reader.readLine();
+        String input;
+        while(!((input = reader.readLine())).equals("KILL")){
             if(!(input.isEmpty()))
-                System.out.println(input);
+                try{
+                    Thread.sleep(500);
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
         }
 
     }
